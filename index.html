@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TopUpKoroBD - eFootball Coins</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#0f172a;
+    color:white;
+}
+
+header{
+    background:#1d4ed8;
+    padding:20px;
+    text-align:center;
+}
+
+.container{
+    max-width:500px;
+    margin:30px auto;
+    background:#1e293b;
+    padding:20px;
+    border-radius:12px;
+}
+
+input,select{
+    width:100%;
+    padding:12px;
+    margin:8px 0 15px;
+    border:none;
+    border-radius:8px;
+}
+
+button{
+    width:100%;
+    padding:14px;
+    background:#22c55e;
+    color:white;
+    border:none;
+    border-radius:8px;
+    font-size:16px;
+}
+
+.package{
+    background:#334155;
+    padding:10px;
+    margin:10px 0;
+    border-radius:8px;
+}
+
+footer{
+    text-align:center;
+    padding:20px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>TopUpKoroBD</h1>
+<p>eFootball Coins Top-Up</p>
+</header>
+
+<div class="container">
+
+<h2>Order Now</h2>
+
+<label>Konami ID / Email</label>
+<input type="text" placeholder="Enter Konami ID">
+
+<label>Select Coins Package</label>
+<select>
+<option>130 Coins - ৳120</option>
+<option>550 Coins - ৳450</option>
+<option>1040 Coins - ৳850</option>
+<option>2130 Coins - ৳1650</option>
+<option>3250 Coins - ৳2500</option>
+</select>
+
+<label>Payment Method</label>
+<select>
+<option>bKash</option>
+<option>Nagad</option>
+</select>
+
+<button onclick="orderNow()">Place Order</button>
+
+</div>
+
+<footer>
+© 2025 TopUpKoroBD
+</footer>
+
+<script>
+function orderNow(){
+ alert("Order Received! We will contact you soon.");
+}
+</script>
+
+</body>
+</html>
