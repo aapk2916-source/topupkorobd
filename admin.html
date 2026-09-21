@@ -22,6 +22,7 @@ label{display:block;color:#b9cbe1;font-size:13px;font-weight:bold;margin:14px 0 
 input{width:100%;padding:13px;background:#031022;border:1px solid #23486d;color:#fff;border-radius:10px;outline:none;font-size:15px}
 input:focus{border-color:#3c9cff}
 .btn-main{width:100%;margin-top:20px;padding:14px;border:0;border-radius:11px;background:linear-gradient(135deg,#ffe600,#ffb800);color:#111;font-weight:900;font-size:16px}
+.showpw{background:none;border:0;color:#5cc0ff;font-size:13px;margin-top:8px;padding:0}
 .err{color:#ff6b6b;font-size:13px;margin-top:12px;min-height:16px}
 
 .topbar{position:sticky;top:0;z-index:10;background:rgba(2,9,20,.96);border-bottom:1px solid #164579;display:flex;align-items:center;justify-content:space-between;padding:13px 16px}
@@ -75,6 +76,7 @@ input:focus{border-color:#3c9cff}
 
     <label for="password">Password</label>
     <input type="password" id="password" autocomplete="current-password" required>
+    <button type="button" class="showpw" id="showPw">Show password</button>
 
     <button class="btn-main" type="submit" id="loginBtn">Login</button>
     <div class="err" id="loginErr"></div>
@@ -101,16 +103,14 @@ import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut }
 import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/* ====== এখানে নিজের Firebase config বসাও ====== */
 const firebaseConfig = {
-  apiKey: "PASTE_HERE",
-  authDomain: "PASTE_HERE",
-  projectId: "PASTE_HERE",
-  storageBucket: "PASTE_HERE",
-  messagingSenderId: "PASTE_HERE",
-  appId: "PASTE_HERE"
+  apiKey: "AIzaSyAbgX0aaZ1J9mddBbNNTYpqTUBbumw5b1Y",
+  authDomain: "topupkorobd-cf454.firebaseapp.com",
+  projectId: "topupkorobd-cf454",
+  storageBucket: "topupkorobd-cf454.firebasestorage.app",
+  messagingSenderId: "564056646065",
+  appId: "1:564056646065:web:5a7f48cd0c04aa13ab1d90"
 };
-/* =============================================== */
 
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -130,9 +130,27 @@ $("loginForm").addEventListener("submit", async (e) => {
   try {
     await signInWithEmailAndPassword(auth, $("email").value.trim(), $("password").value);
   } catch (err) {
-    $("loginErr").textContent = "ইমেইল বা পাসওয়ার্ড ভুল হয়েছে।";
+    const msgs = {
+      "auth/invalid-credential": "ইমেইল বা পাসওয়ার্ড ভুল।",
+      "auth/wrong-password": "পাসওয়ার্ড ভুল।",
+      "auth/user-not-found": "এই ইমেইলে ইউজার নেই।",
+      "auth/invalid-email": "ইমেইলের ফরম্যাট ভুল।",
+      "auth/operation-not-allowed": "Firebase এ Email/Password চালু করা নেই।",
+      "auth/unauthorized-domain": "এই ডোমেইন Authorized domains এ নেই।",
+      "auth/invalid-api-key": "apiKey ভুল।",
+      "auth/network-request-failed": "ইন্টারনেট সমস্যা।",
+      "auth/too-many-requests": "অনেকবার চেষ্টা হয়েছে, কিছুক্ষণ পর আবার চেষ্টা করুন।"
+    };
+    $("loginErr").textContent = (msgs[err.code] || "লগইন হয়নি।") + " (" + err.code + ")";
   }
   $("loginBtn").disabled = false;
+});
+
+$("showPw").addEventListener("click", () => {
+  const p = $("password");
+  const show = p.type === "password";
+  p.type = show ? "text" : "password";
+  $("showPw").textContent = show ? "Hide password" : "Show password";
 });
 
 $("logoutBtn").addEventListener("click", () => signOut(auth));
@@ -295,4 +313,4 @@ function btn(text, cls, fn) {
 </script>
 
 </body>
-  </html>
+</html>
