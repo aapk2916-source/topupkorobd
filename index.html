@@ -13,7 +13,11 @@ body{
     color:white;
 }
 
-header{
+header 
+<div class="notice">
+    ⚡ Fast Delivery • 🛡️ Safe & Secure • 💬 WhatsApp Support
+</div>
+    {
     background:#1d4ed8;
     padding:20px;
     text-align:center;
@@ -73,20 +77,104 @@ footer{
 <label>Konami ID / Email</label>
 <input type="text" placeholder="Enter Konami ID">
 
-<label>Select Coins Package</label>
-<select>
-<option>130 Coins - ৳120</option>
-<option>550 Coins - ৳450</option>
-<option>1040 Coins - ৳850</option>
-<option>2130 Coins - ৳1650</option>
-<option>3250 Coins - ৳2500</option>
-</select>
+<div class="packages">  <label class="package">  
+    <input type="radio" name="package" value="300 Coin">  
+    <span class="radio"></span>  
+    <span class="package-name">300 Coin</span>  
+    <span class="price">390 TK</span>  
+</label>  
 
-<label>Payment Method</label>
-<select>
-<option>bKash</option>
-<option>Nagad</option>
-</select>
+<label class="package">  
+    <input type="radio" name="package" value="50 Coin + Luis Suarez">  
+    <span class="radio"></span>  
+    <span class="package-name">50 coin + Luis Suarez ✅</span>  
+    <span class="price">150 TK</span>  
+</label>  
+
+<label class="package">  
+    <input type="radio" name="package" value="100 Coin + Iker Casillas">  
+    <span class="radio"></span>  
+    <span class="package-name">100 coin + Iker Casillas ✅</span>  
+    <span class="price">370 TK</span>  
+</label>  
+
+<label class="package">  
+    <input type="radio" name="package" value="130 Coin">  
+    <span class="radio"></span>  
+    <span class="package-name">130 Coin</span>  
+    <span class="price">190 TK</span>  
+</label>  
+
+<label class="package">  
+    <input type="radio" name="package" value="550 Coin">  
+    <span class="radio"></span>  
+    <span class="package-name">550 Coin</span>  
+    <span class="price">620 TK</span>  
+</label>  
+
+<label class="package">  
+    <input type="radio" name="package" value="1040 Coin">  
+    <span class="radio"></span>  
+    <span class="package-name">1040 Coin</span>  
+    <span class="price">1100 TK</span>  
+</label>  
+
+<label class="package">  
+    <input type="radio" name="package" value="2130 Coin">  
+    <span class="radio"></span>  
+    <span class="package-name">2,130 Coin</span>  
+    <span class="price">2090 TK</span>  
+</label>  
+
+<label class="package">  
+    <input type="radio" name="package" value="3250 Coin">  
+    <span class="radio"></span>  
+    <span class="package-name">3250 Coin</span>  
+    <span class="price">3070 TK</span>  
+</label>  
+
+<label class="package">  
+    <input type="radio" name="package" value="5700 Coin">  
+    <span class="radio"></span>  
+    <span class="package-name">5700 Coin</span>  
+    <span class="price">5100 TK</span>  
+</label>  
+
+<label class="package">  
+    <input type="radio" name="package" value="12800 Coin">  
+    <span class="radio"></span>  
+    <span class="package-name">12800 Coin</span>  
+    <span class="price">11300 TK</span>  
+</label>  
+
+<label class="package">  
+    <input type="radio" name="package" value="750 Coin">  
+    <span class="radio"></span>  
+    <span class="package-name">750 Coin</span>  
+    <span class="price">780 TK</span>  
+</label>  
+
+<label class="package">  
+    <input type="radio" name="package" value="12800 + 5700 Coin Gift 130">  
+    <span class="radio"></span>  
+    <span class="package-name">12800 + 5700 coin<br>gift 130 coin</span>  
+    <span class="price">16400 TK</span>  
+</label>
+
+<div class="payment-info">
+
+    <div class="payment-box">
+        <span>💳 bKash</span>
+        <strong>01749777140</strong>
+    </div>
+
+    <a class="whatsapp-btn"
+       href="https://wa.me/8801749777140"
+       target="_blank">
+        💬 WhatsApp এ যোগাযোগ করুন
+    </a>
+
+</div>
 
 <button onclick="orderNow()">Place Order</button>
 
