@@ -61,6 +61,20 @@ input:focus{border-color:#3c9cff}
 .a-deliver{background:#00c853;color:#fff}
 .a-reject{background:#3a1b1b;color:#ff8a8a;border:1px solid #7a2626!important}
 .actions button:disabled{opacity:.5}
+
+.modes{display:flex;gap:8px;margin-bottom:14px}
+.mode{flex:1;padding:11px;border-radius:12px;border:1px solid #15395f;background:#07182d;color:#b9cbe1;font-weight:900;font-size:14px}
+.mode.active{background:#1e88e5;border-color:#1e88e5;color:#fff}
+.add{margin:0 0 14px}
+.pkgform{background:#07182d;border:1px solid #15395f;border-radius:16px;padding:16px;margin-bottom:14px}
+.pkgform h3{font-size:16px}
+.form-actions{display:flex;gap:8px;margin-top:16px}
+.form-actions button{flex:1;padding:12px;border:0;border-radius:10px;font-weight:900;font-size:14px}
+.a-cancel{background:#1a2b40;color:#b9cbe1}
+.small-btns{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.small-btns button{flex:1;min-width:58px;padding:10px 6px;border:0;border-radius:9px;font-weight:bold;font-size:13px;background:#12314f;color:#d8e7ff}
+.small-btns button:disabled{opacity:.35}
+.small-btns .danger{background:#3a1b1b;color:#ff8a8a}
 </style>
 </head>
 
@@ -90,17 +104,50 @@ input:focus{border-color:#3c9cff}
   </div>
 
   <div class="wrap">
-    <div class="tabs" id="tabs"></div>
-    <div class="notice" id="notice" hidden></div>
-    <div id="list"></div>
+    <div class="modes">
+      <button class="mode active" id="modeOrders">Orders</button>
+      <button class="mode" id="modePkgs">Packages</button>
+    </div>
+
+    <div id="ordersView">
+      <div class="tabs" id="tabs"></div>
+      <div class="notice" id="notice" hidden></div>
+      <div id="list"></div>
+    </div>
+
+    <div id="pkgView" hidden>
+      <div class="notice" id="pkgNotice" hidden></div>
+      <button class="btn-main add" id="addPkgBtn">+ New package</button>
+
+      <form class="pkgform" id="pkgForm" hidden>
+        <h3 id="pkgFormTitle">New package</h3>
+
+        <label for="pName">Package name</label>
+        <input id="pName" type="text" maxlength="80" required>
+
+        <label for="pPrice">Price (TK)</label>
+        <input id="pPrice" type="number" min="1" step="1" inputmode="numeric" required>
+
+        <label for="pBadge">Badge (optional, e.g. HOT)</label>
+        <input id="pBadge" type="text" maxlength="12">
+
+        <div class="form-actions">
+          <button type="submit" class="a-deliver" id="pSave">Save</button>
+          <button type="button" class="a-cancel" id="pCancel">Cancel</button>
+        </div>
+      </form>
+
+      <div id="pkgList"></div>
+    </div>
   </div>
 </div>
+
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc }
+import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, addDoc, deleteDoc }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -122,6 +169,9 @@ const STATUSES = ["all", "pending", "approved", "delivered", "rejected"];
 let orders = [];
 let filter = "pending";
 let unsubscribe = null;
+let packages = [];
+let unsubPkgs = null;
+let editingId = null;
 
 $("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -160,8 +210,11 @@ onAuthStateChanged(auth, (user) => {
     $("loginView").hidden = true;
     $("appView").hidden = false;
     startListening();
+    startPackages();
   } else {
     if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+    if (unsubPkgs) { unsubPkgs(); unsubPkgs = null; }
+    packages = [];
     orders = [];
     $("appView").hidden = true;
     $("loginView").hidden = false;
@@ -309,6 +362,204 @@ function btn(text, cls, fn) {
   b.textContent = text;
   b.onclick = fn;
   return b;
+}
+
+/* ================= PACKAGES ================= */
+
+const DEFAULT_PACKAGES = [
+  ["300 Coin", 390, ""],
+  ["50 Coin + Luis Suarez ✅", 150, "HOT"],
+  ["100 Coin + Iker Casillas ✅", 370, "POPULAR"],
+  ["130 Coin", 190, ""],
+  ["550 Coin", 620, ""],
+  ["1040 Coin", 1100, ""],
+  ["2,130 Coin", 2090, ""],
+  ["3250 Coin", 3070, ""],
+  ["5700 Coin", 5100, ""],
+  ["12800 Coin", 11300, ""],
+  ["750 Coin", 780, ""],
+  ["12800 + 5700 Coin + Gift 130 Coin", 16400, ""]
+];
+
+$("modeOrders").onclick = () => setMode("orders");
+$("modePkgs").onclick = () => setMode("pkgs");
+
+function setMode(m) {
+  $("ordersView").hidden = m !== "orders";
+  $("pkgView").hidden = m !== "pkgs";
+  $("modeOrders").classList.toggle("active", m === "orders");
+  $("modePkgs").classList.toggle("active", m === "pkgs");
+}
+
+function startPackages() {
+  if (unsubPkgs) unsubPkgs();
+  const q = query(collection(db, "packages"), orderBy("sort", "asc"));
+  unsubPkgs = onSnapshot(q,
+    (snap) => {
+      $("pkgNotice").hidden = true;
+      packages = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      renderPackages();
+    },
+    (err) => {
+      $("pkgNotice").hidden = false;
+      $("pkgNotice").textContent =
+        "প্যাকেজ লোড হয়নি। Firestore Rules এ packages যোগ করা হয়েছে কিনা দেখুন। (" + err.code + ")";
+    }
+  );
+}
+
+function renderPackages() {
+  const list = $("pkgList");
+  list.textContent = "";
+
+  if (!packages.length) {
+    const box = document.createElement("div");
+    box.className = "empty";
+    box.textContent = "এখনো কোনো প্যাকেজ নেই। সাইটে এখন আগের ডিফল্ট প্যাকেজ দেখাচ্ছে।";
+    const b = document.createElement("button");
+    b.className = "btn-main";
+    b.textContent = "ডিফল্ট প্যাকেজগুলো লোড করুন";
+    b.onclick = () => { b.disabled = true; seedDefaults(); };
+    box.append(document.createElement("br"), b);
+    list.append(box);
+    return;
+  }
+
+  packages.forEach((p, i) => list.append(buildPkgCard(p, i)));
+}
+
+function buildPkgCard(p, i) {
+  const card = document.createElement("div");
+  card.className = "card";
+
+  const top = document.createElement("div");
+  top.className = "card-top";
+
+  const left = document.createElement("div");
+  const nm = document.createElement("div");
+  nm.className = "pkg";
+  nm.textContent = p.name || "-";
+  const pr = document.createElement("div");
+  pr.className = "price";
+  pr.textContent = (p.price ?? "-") + " TK" + (p.badge ? "  •  " + p.badge : "");
+  left.append(nm, pr);
+
+  const on = p.active !== false;
+  const st = document.createElement("div");
+  st.className = "badge " + (on ? "s-delivered" : "s-rejected");
+  st.textContent = on ? "Visible" : "Hidden";
+
+  top.append(left, st);
+  card.append(top);
+
+  const bar = document.createElement("div");
+  bar.className = "small-btns";
+
+  const up = btn("↑", "", () => movePkg(i, -1));
+  up.disabled = i === 0;
+  const down = btn("↓", "", () => movePkg(i, 1));
+  down.disabled = i === packages.length - 1;
+
+  bar.append(
+    up,
+    down,
+    btn("Edit", "", () => openForm(p)),
+    btn(on ? "Hide" : "Show", "", () => togglePkg(p)),
+    btn("Delete", "danger", () => deletePkg(p))
+  );
+  card.append(bar);
+
+  return card;
+}
+
+function openForm(p) {
+  editingId = p ? p.id : null;
+  $("pkgFormTitle").textContent = p ? "Edit package" : "New package";
+  $("pName").value = p ? (p.name || "") : "";
+  $("pPrice").value = p ? (p.price ?? "") : "";
+  $("pBadge").value = p ? (p.badge || "") : "";
+  $("pkgForm").hidden = false;
+  $("pkgForm").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+$("addPkgBtn").onclick = () => openForm(null);
+
+$("pCancel").onclick = () => {
+  $("pkgForm").hidden = true;
+  editingId = null;
+};
+
+$("pkgForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = $("pName").value.trim();
+  const price = Math.round(Number($("pPrice").value));
+  const badge = $("pBadge").value.trim();
+
+  if (!name || !(price > 0)) {
+    alert("নাম ও দাম ঠিকভাবে দিন।");
+    return;
+  }
+
+  $("pSave").disabled = true;
+  try {
+    if (editingId) {
+      await updateDoc(doc(db, "packages", editingId), { name, price, badge });
+    } else {
+      const maxSort = packages.reduce((m, p) => Math.max(m, p.sort || 0), 0);
+      await addDoc(collection(db, "packages"),
+        { name, price, badge, active: true, sort: maxSort + 1 });
+    }
+    $("pkgForm").hidden = true;
+    editingId = null;
+  } catch (err) {
+    alert("সেভ হয়নি: " + err.code);
+  }
+  $("pSave").disabled = false;
+});
+
+async function togglePkg(p) {
+  try {
+    await updateDoc(doc(db, "packages", p.id), { active: p.active === false });
+  } catch (err) {
+    alert("আপডেট হয়নি: " + err.code);
+  }
+}
+
+async function deletePkg(p) {
+  if (!confirm("মুছে ফেলবেন? " + p.name)) return;
+  try {
+    await deleteDoc(doc(db, "packages", p.id));
+  } catch (err) {
+    alert("মোছা যায়নি: " + err.code);
+  }
+}
+
+async function movePkg(i, dir) {
+  const a = packages[i], b = packages[i + dir];
+  if (!a || !b) return;
+  try {
+    await updateDoc(doc(db, "packages", a.id), { sort: b.sort });
+    await updateDoc(doc(db, "packages", b.id), { sort: a.sort });
+  } catch (err) {
+    alert("সরানো যায়নি: " + err.code);
+  }
+}
+
+async function seedDefaults() {
+  if (!confirm("১২টি ডিফল্ট প্যাকেজ যোগ হবে। ঠিক আছে?")) {
+    renderPackages();
+    return;
+  }
+  try {
+    for (let i = 0; i < DEFAULT_PACKAGES.length; i++) {
+      const d = DEFAULT_PACKAGES[i];
+      await addDoc(collection(db, "packages"),
+        { name: d[0], price: d[1], badge: d[2], active: true, sort: i + 1 });
+    }
+  } catch (err) {
+    alert("লোড হয়নি: " + err.code);
+    renderPackages();
+  }
 }
 </script>
 
